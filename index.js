@@ -17,24 +17,28 @@ app.use(cors());
 /* Initialize the LLM to use to answer the question */
 const model = new OpenAI({ openAIApiKey: process.env.OPENAI_API_KEY });
 /* Load in the file we want to do question answering over */
-
-const loader = new CSVLoader("./shopify.csv");
-const docsData = await loader.load();
+let chain;
+try {
+  const loader = new CSVLoader("./shopify.csv");
+  const docsData = await loader.load();
+  const vectorStore = await HNSWLib.fromDocuments(
+    docsData,
+    new OpenAIEmbeddings()
+  );
+  /* Create the chain */
+  chain = ConversationalRetrievalQAChain.fromLLM(
+    model,
+    vectorStore.asRetriever()
+  );
+} catch (error) {
+  console.log(error);
+}
 
 // const textSplitter = new RecursiveCharacterTextSplitter({
 //   chunkSize: 1000,
 // });
 // const docs = await textSplitter.createDocuments([docsData]);
 /* Create the vectorstore */
-const vectorStore = await HNSWLib.fromDocuments(
-  docsData,
-  new OpenAIEmbeddings()
-);
-/* Create the chain */
-const chain = ConversationalRetrievalQAChain.fromLLM(
-  model,
-  vectorStore.asRetriever()
-);
 /* Split the text into chunks */
 
 app.post("/chatbot", async (req, res) => {
