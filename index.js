@@ -52,9 +52,8 @@ app.post("/chatbot", async (req, res) => {
 
     const data = {
       question: prompt,
-      response: result.text,
+      response: result?.text,
     };
-    console.log(result.text);
     const filePath = "responses.txt";
 
     const textData = Object.entries(data)
